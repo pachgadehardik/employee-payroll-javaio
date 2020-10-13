@@ -3,6 +3,8 @@ package com.capg.javaio;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import com.capg.javaio.EmployeePayrollService.IOService;
+
 /**
  * Java IO 
  */
@@ -15,6 +17,6 @@ public class Driver
         EmployeePayrollService employeePayrollService = new EmployeePayrollService(employeePayrollList);
         Scanner consoleInput  = new Scanner(System.in);
         employeePayrollService.readEmployeePayrollDataFromConsole(consoleInput);
-        employeePayrollService.writeEmployeePayrollData();
+        employeePayrollService.writeEmployeePayrollData(IOService.FILE_IO);
     }
 }
