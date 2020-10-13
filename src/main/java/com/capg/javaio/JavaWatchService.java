@@ -25,7 +25,8 @@ public class JavaWatchService {
 	}
 
 	private void registerDirWatchers(Path dir) throws IOException {
-		WatchKey key = dir.register(watcher, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
+		WatchKey key = dir.register(watcher, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE,
+				StandardWatchEventKinds.ENTRY_MODIFY);
 		dirWatchers.put(key, dir);
 	}
 
@@ -41,7 +42,7 @@ public class JavaWatchService {
 
 	@SuppressWarnings("unchecked")
 	public void processEvents() {
-		int countEntry =0;
+		int countEntry = 0;
 		while (true) {
 			WatchKey key;
 			try {
@@ -58,22 +59,27 @@ public class JavaWatchService {
 				WatchEvent.Kind kind = event.kind();
 				Path name = ((WatchEvent<Path>) event).context();
 				Path child = dir.resolve(name);
-				System.out.format("%s: %s\n", event.kind().name(), child);
+				System.out.format("++++>%s: %s\n", event.kind().name(), child);
 
 				if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
 					try {
 						if (Files.isDirectory(child)) {
 							scanAndRegisterDirectories(child);
-							System.out.println("Entry Count: "+ ++countEntry);
+							System.out.format("++++>%s: %s\n", event.kind().name(), child);
+							System.out.println("Entry Count: " + countEntry++);
+						} 
+					} catch (IOException x) {}
+				}
+				else if (kind.equals(StandardWatchEventKinds.ENTRY_DELETE)) {
+					
+						if (Files.isDirectory(child)) {
+							dirWatchers.remove(key);
+//							System.out.format("==>%s: %s\n", event.kind().name(), child);
 						}
-					} catch (IOException x) {
 					}
-				} else if (kind.equals(StandardWatchEventKinds.ENTRY_DELETE)) {
-					if (Files.isDirectory(child))
-						dirWatchers.remove(key);
 				}
 
-			}
+			
 			boolean valid = key.reset();
 			if (!valid) {
 				dirWatchers.remove(key);
