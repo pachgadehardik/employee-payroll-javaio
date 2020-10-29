@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -106,6 +107,17 @@ public class EmployeePayrollServiceTest {
 		Map<String,Double> averageSalaryByGender = employeePayrollService.readAvergaeSalaryByGender(IOService.DB_IO);
 		assertTrue(averageSalaryByGender.get("M").equals(300000.00) && averageSalaryByGender.get("F").equals(250000.00));
 	}
+	
+	
+	@Test //DBUC 7 inserting employee
+	public void givenEmployee_WhenAdded_Should_SyncWithDB() throws SQLException {
+		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
+		employeePayrollService.readEmployeePayrollData(IOService.DB_IO);
+		employeePayrollService.addEmployeeToPayrollTable("Mark", 400000.00, LocalDate.now(),"M");
+		boolean result = employeePayrollService.checkEmployeePayrollInSyncWithDB("Mark");
+		assertTrue(result);
+	}
+	
 	
 
 }

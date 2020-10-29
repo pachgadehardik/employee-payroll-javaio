@@ -111,6 +111,9 @@ public class EmployeePayrollService {
 			return employeePayrollDBService.getAverageSalaryByGender();
 		return null;
 	}
+	public void addEmployeeToPayrollTable(String name, double salary, LocalDate startDate, String gender) throws SQLException {
+		employeePayrollList.add(employeePayrollDBService.addEmployeeToPayrollTable(name,salary,startDate,gender));
+	}
 
 	
 }
