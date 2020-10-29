@@ -1,4 +1,4 @@
-package com.capg.javaio;
+package com.capg.javaio.services;
 
 import java.io.File;
 import java.io.IOException;
@@ -6,6 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.capg.javaio.model.EmployeePayrollData;
 
 public class EmployeePayrollFileIOService {
 
@@ -62,7 +64,7 @@ public class EmployeePayrollFileIOService {
 
 		int id = Integer.valueOf(arr[0].split("=")[1]);
 		String name = arr[1].split("=")[1];
-		int salary = Integer.valueOf(arr[2].split("=")[1]);
+		Double salary = Double.valueOf(arr[2].split("=")[1]);
 		EmployeePayrollData employeePayrollData = new EmployeePayrollData(id, name, salary);
 		employeePayrollDataList.add(employeePayrollData);
 	}

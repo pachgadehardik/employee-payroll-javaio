@@ -1,3 +1,3 @@
-id=1, name=John, salary=100000
-id=2, name=Jay, salary=250000
-id=3, name=Roy, salary=300000
+EmployeePayrollData [id=1, name=John, salary=100000.0, startDate=null]
+EmployeePayrollData [id=2, name=Jay, salary=250000.0, startDate=null]
+EmployeePayrollData [id=3, name=Roy, salary=300000.0, startDate=null]

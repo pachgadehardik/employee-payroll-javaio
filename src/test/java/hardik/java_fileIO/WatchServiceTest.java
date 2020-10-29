@@ -10,7 +10,7 @@ import java.util.stream.IntStream;
 
 import org.junit.Test;
 
-import com.capg.javaio.JavaWatchService;
+import com.capg.javaio.services.JavaWatchService;
 
 public class WatchServiceTest {
 

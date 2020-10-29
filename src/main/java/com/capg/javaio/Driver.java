@@ -3,7 +3,9 @@ package com.capg.javaio;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-import com.capg.javaio.EmployeePayrollService.IOService;
+import com.capg.javaio.model.EmployeePayrollData;
+import com.capg.javaio.services.EmployeePayrollService;
+import com.capg.javaio.services.EmployeePayrollService.IOService;
 
 /**
  * Java IO 
