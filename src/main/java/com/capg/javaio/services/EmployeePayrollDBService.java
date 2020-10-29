@@ -106,7 +106,7 @@ public class EmployeePayrollDBService {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		
+
 		return employeeList;
 	}
 
@@ -143,28 +143,28 @@ public class EmployeePayrollDBService {
 	}
 
 	public List<EmployeePayrollData> getEmployeeRecordsByDate(LocalDate date1, LocalDate date2) throws SQLException {
-		try(Connection conn = getConnection()){
+		try (Connection conn = getConnection()) {
 			String sql = "select * from temp_payroll_table where start_date between ? and ?";
 			PreparedStatement pStmt = conn.prepareStatement(sql);
 			pStmt.setDate(1, java.sql.Date.valueOf(date1));
 			pStmt.setDate(2, java.sql.Date.valueOf(date2));
 			ResultSet result = pStmt.executeQuery();
 			List<EmployeePayrollData> resultlist = getEmployeePayrollData(result);
-			System.out.println("Employee records after Query: "+resultlist.toString());
+			System.out.println("Employee records after Query: " + resultlist.toString());
 			return resultlist;
-		}catch(SQLException e) {
-			throw new CustomMySqlException(e.getMessage(),ExceptionType.OTHER_TYPE);
+		} catch (SQLException e) {
+			throw new CustomMySqlException(e.getMessage(), ExceptionType.OTHER_TYPE);
 		}
 	}
 
 	public double getEmployeeSalaryByAggrgation(AggregateFunctions methodType, String gender) throws SQLException {
 		double agg = 0;
-		try(Connection conn = getConnection()){
+		try (Connection conn = getConnection()) {
 			PreparedStatement pStmt = conn.prepareStatement(methodType.getQuery());
 			pStmt.setString(1, gender);
 			ResultSet result = pStmt.executeQuery();
-			while(result.next()) {
-				 agg = result.getDouble(1);
+			while (result.next()) {
+				agg = result.getDouble(1);
 			}
 			return agg;
 		}
@@ -172,11 +172,11 @@ public class EmployeePayrollDBService {
 
 	public Map<String, Double> getAverageSalaryByGender() throws SQLException {
 		String sql = "Select gender,AVG(salary) as avg_salary from temp_payroll_table group by gender;";
-		Map<String,Double> genderToAverageMap = new HashMap<>();
-		try(Connection connection = getConnection()){
+		Map<String, Double> genderToAverageMap = new HashMap<>();
+		try (Connection connection = getConnection()) {
 			Statement statement = connection.createStatement();
 			ResultSet resultSet = statement.executeQuery(sql);
-			while(resultSet.next()) {
+			while (resultSet.next()) {
 				String gender = resultSet.getString("gender");
 				double salary = resultSet.getDouble("avg_salary");
 				genderToAverageMap.put(gender, salary);
@@ -185,25 +185,79 @@ public class EmployeePayrollDBService {
 		return genderToAverageMap;
 	}
 
-	public EmployeePayrollData addEmployeeToPayrollTable(String name, double salary, LocalDate startDate,
+	public EmployeePayrollData addEmployeeToPayrollTableUC7(String name, double salary, LocalDate startDate,
 			String gender) throws SQLException {
 		int id = -1;
-		EmployeePayrollData employeePayrollData  = null;
-		String sql = String.format("INSERT INTO temp_payroll_table (name, salary,start_date,gender) "+
-					"Values ('%s', '%s', '%s', '%s' );", name, salary,Date.valueOf(startDate),gender);
-		try(Connection conn = getConnection()){
+		EmployeePayrollData employeePayrollData = null;
+		String sql = String.format("INSERT INTO temp_payroll_table (name, salary,start_date,gender) "
+				+ "Values ('%s', '%s', '%s', '%s' );", name, salary, Date.valueOf(startDate), gender);
+		try (Connection conn = getConnection()) {
 			Statement statement = conn.createStatement();
-			int rowAffected = statement.executeUpdate(sql,statement.RETURN_GENERATED_KEYS);
-			if(rowAffected == 1) {
+			int rowAffected = statement.executeUpdate(sql, statement.RETURN_GENERATED_KEYS);
+			if (rowAffected == 1) {
 				ResultSet resultSet = statement.getGeneratedKeys();
-				if(resultSet.next()) id = resultSet.getInt(1);
+				if (resultSet.next())
+					id = resultSet.getInt(1);
 			}
 			employeePayrollData = new EmployeePayrollData(id, name, salary, startDate);
 		}
- 		
+
 		return employeePayrollData;
 	}
-	
-	
+
+	public EmployeePayrollData addEmployeeToPayrollTable(String name, double salary, LocalDate startDate, String gender)
+			throws SQLException {
+		int emp_id = -1;
+		EmployeePayrollData employeePayrollData = null;
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			conn.setAutoCommit(false);
+		} catch (SQLException e) {
+			throw new CustomMySqlException(e.getMessage(), ExceptionType.OTHER_TYPE);
+		}
+
+		try (Statement statement = conn.createStatement()) {
+			String sql = String.format("INSERT INTO temp_payroll_table (name, salary,start_date,gender) "
+					+ "Values ('%s', '%s', '%s', '%s' );", name, salary, Date.valueOf(startDate), gender);
+			int rowAffected = statement.executeUpdate(sql, statement.RETURN_GENERATED_KEYS);
+			if (rowAffected == 1) {
+				ResultSet resultSet = statement.getGeneratedKeys();
+				if (resultSet.next())
+					emp_id = resultSet.getInt(1);
+			}
+		} catch (SQLException e) {
+			conn.rollback();
+			throw new CustomMySqlException(e.getMessage(), ExceptionType.OTHER_TYPE);
+		}
+
+		try (Statement statement = conn.createStatement()) {
+			double deductions = salary * 0.2;
+			double taxablePay = salary - deductions;
+			double tax = taxablePay * 0.1;
+			double netPay = salary - tax;
+			String sql = String.format(
+					"INSERT INTO temp_payroll_detail_table (emp_id,basic_pay, deductions, taxable_pay, tax, net_pay) "
+							+ "Values ('%s','%s', '%s', '%s', '%s', '%s' );",
+					emp_id, salary, deductions, taxablePay, tax, netPay);
+			int rowAffected = statement.executeUpdate(sql);
+			if (rowAffected == 1)
+				employeePayrollData = new EmployeePayrollData(emp_id, name, salary, startDate);
+		} catch (SQLException e) {
+			conn.rollback();
+			throw new CustomMySqlException(e.getMessage(), ExceptionType.OTHER_TYPE);
+		} finally {
+			if (conn != null) {
+				try {
+					conn.commit();
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		return employeePayrollData;
+	}
 
 }

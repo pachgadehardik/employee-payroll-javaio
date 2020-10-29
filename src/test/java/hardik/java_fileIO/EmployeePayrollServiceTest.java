@@ -109,14 +109,15 @@ public class EmployeePayrollServiceTest {
 	}
 	
 	
-	@Test //DBUC 7 inserting employee
+	@Test //DBUC 7 & 8 inserting employee
 	public void givenEmployee_WhenAdded_Should_SyncWithDB() throws SQLException {
 		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
 		employeePayrollService.readEmployeePayrollData(IOService.DB_IO);
-		employeePayrollService.addEmployeeToPayrollTable("Mark", 400000.00, LocalDate.now(),"M");
-		boolean result = employeePayrollService.checkEmployeePayrollInSyncWithDB("Mark");
+		employeePayrollService.addEmployeeToPayrollTable("Jane", 340000.00, LocalDate.now(),"F");
+		boolean result = employeePayrollService.checkEmployeePayrollInSyncWithDB("Jane");
 		assertTrue(result);
 	}
+	
 	
 	
 
