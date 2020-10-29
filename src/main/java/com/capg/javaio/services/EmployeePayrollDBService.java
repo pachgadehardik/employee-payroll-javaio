@@ -1,6 +1,7 @@
 package com.capg.javaio.services;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,6 +11,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.capg.javaio.enums.AggregateFunctions;
 import com.capg.javaio.exceptions.CustomMySqlException;
 import com.capg.javaio.exceptions.CustomMySqlException.ExceptionType;
 import com.capg.javaio.model.EmployeePayrollData;
@@ -102,6 +104,7 @@ public class EmployeePayrollDBService {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+		
 		return employeeList;
 	}
 
@@ -136,5 +139,35 @@ public class EmployeePayrollDBService {
 			throw new CustomMySqlException(e.getMessage(), ExceptionType.NO_DATA_FOUND);
 		}
 	}
+
+	public List<EmployeePayrollData> getEmployeeRecordsByDate(LocalDate date1, LocalDate date2) throws SQLException {
+		try(Connection conn = getConnection()){
+			String sql = "select * from temp_payroll_table where start_date between ? and ?";
+			PreparedStatement pStmt = conn.prepareStatement(sql);
+			pStmt.setDate(1, java.sql.Date.valueOf(date1));
+			pStmt.setDate(2, java.sql.Date.valueOf(date2));
+			ResultSet result = pStmt.executeQuery();
+			List<EmployeePayrollData> resultlist = getEmployeePayrollData(result);
+			System.out.println("Employee records after Query: "+resultlist.toString());
+			return resultlist;
+		}catch(SQLException e) {
+			throw new CustomMySqlException(e.getMessage(),ExceptionType.OTHER_TYPE);
+		}
+	}
+
+	public double getEmployeeSalaryByAggrgation(AggregateFunctions methodType, String gender) throws SQLException {
+		double agg = 0;
+		try(Connection conn = getConnection()){
+			PreparedStatement pStmt = conn.prepareStatement(methodType.getQuery());
+			pStmt.setString(1, gender);
+			ResultSet result = pStmt.executeQuery();
+			while(result.next()) {
+				 agg = result.getDouble(1);
+			}
+			return agg;
+		}
+	}
+	
+	
 
 }

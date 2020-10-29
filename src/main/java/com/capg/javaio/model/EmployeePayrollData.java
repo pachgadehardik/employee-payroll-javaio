@@ -8,6 +8,7 @@ public class EmployeePayrollData {
 	private String name;
 	private Double salary;
 	private LocalDate startDate;
+	private String gender;
 	
 	public EmployeePayrollData(int id, String name, Double salary) {
 		this.id = id;
@@ -18,6 +19,11 @@ public class EmployeePayrollData {
 	public EmployeePayrollData(int id, String name, Double salary, LocalDate startDate) {
 		this(id,name,salary);
 		this.startDate = startDate;
+	}
+	
+	public EmployeePayrollData(int id, String name, Double salary, LocalDate startDate, String gender) {
+		this(id,name,salary,startDate);
+		this.gender = gender;
 	}
 	
 	public int getId() {
@@ -52,12 +58,20 @@ public class EmployeePayrollData {
 		this.startDate = startDate;
 	}
 
-	@Override
-	public String toString() {
-		return "EmployeePayrollData [id=" + id + ", name=" + name + ", salary=" + salary + ", startDate=" + startDate
-				+ "]";
+	public String getGender() {
+		return gender;
 	}
-	
+
+	public void setGender(String gender) {
+		this.gender = gender;
+	}
+//
+//	@Override
+//	public String toString() {
+//		return "EmployeePayrollData [id=" + id + ", name=" + name + ", salary=" + salary + ", startDate=" + startDate
+//				+ "]";
+//	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -67,6 +81,11 @@ public class EmployeePayrollData {
 		if (getClass() != obj.getClass())
 			return false;
 		EmployeePayrollData other = (EmployeePayrollData) obj;
+		if (gender == null) {
+			if (other.gender != null)
+				return false;
+		} else if (!gender.equals(other.gender))
+			return false;
 		if (id != other.id)
 			return false;
 		if (name == null) {

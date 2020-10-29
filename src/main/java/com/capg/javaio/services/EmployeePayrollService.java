@@ -1,9 +1,14 @@
 package com.capg.javaio.services;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 
+import com.capg.javaio.enums.AggregateFunctions;
 import com.capg.javaio.exceptions.CustomMySqlException;
 import com.capg.javaio.model.EmployeePayrollData;
 
@@ -59,9 +64,7 @@ public class EmployeePayrollService {
 		if (ioService.equals(IOService.FILE_IO))
 			this.employeePayrollList = new EmployeePayrollFileIOService().readData();
 		if (ioService.equals(IOService.DB_IO)) {
-//			EmployeePayrollDBService employeePayrollDBService = (EmployeePayrollDBService) new EmployeePayrollDBService()
-//					.getInstance();
-			this.employeePayrollList = EmployeePayrollDBService.readData();
+			this.employeePayrollList = employeePayrollDBService.readData();
 		}
 		System.out.println(employeePayrollList);
 		return employeePayrollList;
@@ -86,5 +89,22 @@ public class EmployeePayrollService {
 		List<EmployeePayrollData> employeePayrollDataList =  employeePayrollDBService.getInstance().getEmployeePayrollDataInList (name);
 		return employeePayrollDataList.get(0).equals(getEmployeePayrollData(name));
 	}
+	
+	public List<EmployeePayrollData> getSalaryBasedOnDateRange(String date1, String date2) throws SQLException {
+		
+		List<EmployeePayrollData> employeePayrollDataList = new ArrayList<EmployeePayrollData>();
+		
+		LocalDate localDate1 = LocalDate.parse(date1);
+		LocalDate localDate2 = LocalDate.parse(date2);
+		employeePayrollDataList = employeePayrollDBService.getEmployeeRecordsByDate(localDate1,localDate2);
+		
+		return employeePayrollDataList;
+	}
+	public Double getAggregateSalaryRecords(AggregateFunctions methodType, String gender) throws SQLException {
+		
+		return employeePayrollDBService.getEmployeeSalaryByAggrgation(methodType, gender);
+		 
+	}
 
+	
 }
