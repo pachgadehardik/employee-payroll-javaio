@@ -11,6 +11,7 @@ import java.util.Set;
 
 import com.capg.javaio.enums.AggregateFunctions;
 import com.capg.javaio.exceptions.CustomMySqlException;
+import com.capg.javaio.model.Department;
 import com.capg.javaio.model.EmployeePayrollData;
 
 public class EmployeePayrollService {
@@ -111,8 +112,11 @@ public class EmployeePayrollService {
 			return employeePayrollDBService.getAverageSalaryByGender();
 		return null;
 	}
-	public void addEmployeeToPayrollTable(String name, double salary, LocalDate startDate, String gender) throws SQLException {
-		employeePayrollList.add(employeePayrollDBService.addEmployeeToPayrollTable(name,salary,startDate,gender));
+	public void addEmployeeToPayrollTable(String name, String gender ,double salary, LocalDate startDate, List<Department> deptList) throws SQLException {
+		employeePayrollList.add(employeePayrollDBService.addEmployeeToPayrollTable(name,salary,startDate,gender,deptList));
+	}
+	public void removeEmployeeFromPayroll(int id) throws CustomMySqlException {
+		employeePayrollDBService.updatePayrollData(id,employeePayrollList);
 	}
 
 	

@@ -12,10 +12,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.capg.javaio.enums.AggregateFunctions;
 import com.capg.javaio.exceptions.CustomMySqlException;
 import com.capg.javaio.exceptions.CustomMySqlException.ExceptionType;
+import com.capg.javaio.model.Department;
 import com.capg.javaio.model.EmployeePayrollData;
 
 public class EmployeePayrollDBService {
@@ -59,7 +61,7 @@ public class EmployeePayrollDBService {
 	}
 
 	public static List<EmployeePayrollData> readData() throws SQLException {
-		String sql = "Select * from temp_payroll_table";
+		String sql = "Select * from employee";
 		List<EmployeePayrollData> employeePayrollList = new ArrayList<EmployeePayrollData>();
 		Connection conn = getConnection();
 		Statement statement = conn.createStatement();
@@ -86,7 +88,7 @@ public class EmployeePayrollDBService {
 	private void preparedStatementForEmployeeData() throws CustomMySqlException {
 		try {
 			Connection conn = this.getConnection();
-			String sql = "Select * from temp_payroll_table where name = ?";
+			String sql = "Select * from employee where name = ?";
 			employeePayrollDataStatement = conn.prepareStatement(sql);
 		} catch (SQLException e) {
 			throw new CustomMySqlException(e.getMessage(), ExceptionType.OTHER_TYPE);
@@ -120,7 +122,7 @@ public class EmployeePayrollDBService {
 	private int updateEmployeeDataUsingPreparedStatement(String name, double salary) {
 		int result = 0;
 		try (Connection conn = this.getConnection()) {
-			String sql = "update temp_payroll_table set salary =? where name = ?";
+			String sql = "update employee set salary =? where name = ?";
 			PreparedStatement stmt = conn.prepareStatement(sql);
 			stmt.setDouble(1, salary);
 			stmt.setString(2, name);
@@ -134,7 +136,7 @@ public class EmployeePayrollDBService {
 
 	private int updateEmployeeDataUsingSQLQuery(String name, double salary) throws CustomMySqlException {
 		try (Connection conn = getConnection()) {
-			String sql = String.format("update temp_payroll_table set salary = %.2f where name = '%s';", salary, name);
+			String sql = String.format("update employee set salary = %.2f where name = '%s';", salary, name);
 			Statement stmt = conn.createStatement();
 			return stmt.executeUpdate(sql);
 		} catch (SQLException e) {
@@ -144,7 +146,7 @@ public class EmployeePayrollDBService {
 
 	public List<EmployeePayrollData> getEmployeeRecordsByDate(LocalDate date1, LocalDate date2) throws SQLException {
 		try (Connection conn = getConnection()) {
-			String sql = "select * from temp_payroll_table where start_date between ? and ?";
+			String sql = "select * from employee where start_date between ? and ?";
 			PreparedStatement pStmt = conn.prepareStatement(sql);
 			pStmt.setDate(1, java.sql.Date.valueOf(date1));
 			pStmt.setDate(2, java.sql.Date.valueOf(date2));
@@ -171,7 +173,7 @@ public class EmployeePayrollDBService {
 	}
 
 	public Map<String, Double> getAverageSalaryByGender() throws SQLException {
-		String sql = "Select gender,AVG(salary) as avg_salary from temp_payroll_table group by gender;";
+		String sql = "Select gender,AVG(salary) as avg_salary from employee group by gender;";
 		Map<String, Double> genderToAverageMap = new HashMap<>();
 		try (Connection connection = getConnection()) {
 			Statement statement = connection.createStatement();
@@ -189,7 +191,7 @@ public class EmployeePayrollDBService {
 			String gender) throws SQLException {
 		int id = -1;
 		EmployeePayrollData employeePayrollData = null;
-		String sql = String.format("INSERT INTO temp_payroll_table (name, salary,start_date,gender) "
+		String sql = String.format("INSERT INTO employee (name, salary,start_date,gender) "
 				+ "Values ('%s', '%s', '%s', '%s' );", name, salary, Date.valueOf(startDate), gender);
 		try (Connection conn = getConnection()) {
 			Statement statement = conn.createStatement();
@@ -205,7 +207,7 @@ public class EmployeePayrollDBService {
 		return employeePayrollData;
 	}
 
-	public EmployeePayrollData addEmployeeToPayrollTable(String name, double salary, LocalDate startDate, String gender)
+	public EmployeePayrollData addEmployeeToPayrollTable(String name, double salary, LocalDate startDate, String gender,List<Department> deptList)
 			throws SQLException {
 		int emp_id = -1;
 		EmployeePayrollData employeePayrollData = null;
@@ -218,8 +220,8 @@ public class EmployeePayrollDBService {
 		}
 
 		try (Statement statement = conn.createStatement()) {
-			String sql = String.format("INSERT INTO temp_payroll_table (name, salary,start_date,gender) "
-					+ "Values ('%s', '%s', '%s', '%s' );", name, salary, Date.valueOf(startDate), gender);
+			String sql = String.format("INSERT INTO employee (name,gender,salary,start_date) "
+					+ "Values ('%s', '%s', '%s', '%s' );", name, gender,salary, Date.valueOf(startDate));
 			int rowAffected = statement.executeUpdate(sql, statement.RETURN_GENERATED_KEYS);
 			if (rowAffected == 1) {
 				ResultSet resultSet = statement.getGeneratedKeys();
@@ -237,16 +239,36 @@ public class EmployeePayrollDBService {
 			double tax = taxablePay * 0.1;
 			double netPay = salary - tax;
 			String sql = String.format(
-					"INSERT INTO temp_payroll_detail_table (emp_id,basic_pay, deductions, taxable_pay, tax, net_pay) "
+					"INSERT INTO payroll (payroll_id,basic_pay, income_tax, deduction, taxable_pay, net_pay) "
 							+ "Values ('%s','%s', '%s', '%s', '%s', '%s' );",
-					emp_id, salary, deductions, taxablePay, tax, netPay);
+					emp_id, salary,tax, deductions, taxablePay,netPay);
 			int rowAffected = statement.executeUpdate(sql);
-			if (rowAffected == 1)
-				employeePayrollData = new EmployeePayrollData(emp_id, name, salary, startDate);
+			if (rowAffected != 1)
+				conn.rollback();
+				
 		} catch (SQLException e) {
 			conn.rollback();
 			throw new CustomMySqlException(e.getMessage(), ExceptionType.OTHER_TYPE);
-		} finally {
+		} 
+		
+		try(Statement statement = conn.createStatement()){
+			for(Department deptName : deptList) {
+				String sql;
+				if(deptName.getDeptName() == "Sales")
+					sql=String.format("Insert into employee_department (emp_id,dept_id) values ('%s','%s');",emp_id,1);
+				else
+					sql = String.format("Insert into employee_department (emp_id,dept_id) values ('%s','%s');",emp_id,2);
+				int rowAffected = statement.executeUpdate(sql);
+				if(rowAffected ==1)
+					System.out.println("Query FIred!");
+				}
+			employeePayrollData = new EmployeePayrollData(emp_id, name, salary, startDate);
+			employeePayrollData.setDepartments(deptList);
+		}catch(SQLException e) {
+			conn.rollback();
+			e.printStackTrace();
+		}
+		finally {
 			if (conn != null) {
 				try {
 					conn.commit();
@@ -258,6 +280,36 @@ public class EmployeePayrollDBService {
 		}
 		
 		return employeePayrollData;
+	}
+
+	public void updatePayrollData(int id, List<EmployeePayrollData> list) throws CustomMySqlException {
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			conn.setAutoCommit(false);
+		}catch (SQLException e) {
+			throw new CustomMySqlException(e.getMessage(), ExceptionType.OTHER_TYPE);
+		}
+		try (Statement stmt = conn.createStatement()) {
+			String sql = String.format("update payroll set is_active = 'false' where payroll_id = '%s';", id);
+			stmt.executeUpdate(sql);
+			Optional<EmployeePayrollData> employeePayrollData = list.stream().filter(obj -> id==obj.getId()).findFirst();
+			if(employeePayrollData.isPresent()) {
+				list.remove(employeePayrollData.get());
+			}
+			
+		} catch (SQLException e) {
+			throw new CustomMySqlException(e.getMessage(), ExceptionType.NO_DATA_FOUND);
+		}finally {
+			if (conn != null) {
+				try {
+					conn.commit();
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 
 }

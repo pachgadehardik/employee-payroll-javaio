@@ -1,6 +1,7 @@
 package com.capg.javaio.model;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public class EmployeePayrollData {
 
@@ -9,7 +10,8 @@ public class EmployeePayrollData {
 	private Double salary;
 	private LocalDate startDate;
 	private String gender;
-	
+	private String companyName;
+	private List<Department> departments;
 	public EmployeePayrollData(int id, String name, Double salary) {
 		this.id = id;
 		this.name = name;
@@ -24,6 +26,12 @@ public class EmployeePayrollData {
 	public EmployeePayrollData(int id, String name, Double salary, LocalDate startDate, String gender) {
 		this(id,name,salary,startDate);
 		this.gender = gender;
+	}
+	
+	public EmployeePayrollData(int id,String name, Double salary, LocalDate startDate, String gender, String companyName, List<Department> departments) {
+		this(id,name,salary,startDate,gender);
+		this.companyName = companyName;
+		this.departments = departments;
 	}
 	
 	public int getId() {
@@ -65,12 +73,24 @@ public class EmployeePayrollData {
 	public void setGender(String gender) {
 		this.gender = gender;
 	}
-//
-//	@Override
-//	public String toString() {
-//		return "EmployeePayrollData [id=" + id + ", name=" + name + ", salary=" + salary + ", startDate=" + startDate
-//				+ "]";
-//	}
+
+	public String getCompanyName() {
+		return companyName;
+	}
+
+	public void setCompanyName(String companyName) {
+		this.companyName = companyName;
+	}
+
+	
+
+	public List<Department> getDepartments() {
+		return departments;
+	}
+
+	public void setDepartments(List<Department> departments) {
+		this.departments = departments;
+	}
 
 	@Override
 	public boolean equals(Object obj) {

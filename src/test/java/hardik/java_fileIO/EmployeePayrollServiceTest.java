@@ -1,11 +1,14 @@
 package hardik.java_fileIO;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -14,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import com.capg.javaio.enums.AggregateFunctions;
 import com.capg.javaio.exceptions.CustomMySqlException;
 import com.capg.javaio.exceptions.CustomMySqlException.ExceptionType;
+import com.capg.javaio.model.Department;
 import com.capg.javaio.model.EmployeePayrollData;
 import com.capg.javaio.services.EmployeePayrollService;
 import com.capg.javaio.services.EmployeePayrollService.IOService;
@@ -113,11 +117,33 @@ public class EmployeePayrollServiceTest {
 	public void givenEmployee_WhenAdded_Should_SyncWithDB() throws SQLException {
 		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
 		employeePayrollService.readEmployeePayrollData(IOService.DB_IO);
-		employeePayrollService.addEmployeeToPayrollTable("Jane", 340000.00, LocalDate.now(),"F");
+		List<Department> deptList = new ArrayList<Department>();
+		deptList.add(new Department("Sales"));
+		employeePayrollService.addEmployeeToPayrollTable("Jane", "F",340000.00, LocalDate.now(), deptList);
 		boolean result = employeePayrollService.checkEmployeePayrollInSyncWithDB("Jane");
 		assertTrue(result);
 	}
+		
+	@Test //Implementing UC9 to UC 11 ER
+	public void givenEmployee_WhenAddedShouldSyncWithDB() throws SQLException {
+		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
+		employeePayrollService.readEmployeePayrollData(IOService.DB_IO);
+		List<Department> deptList = new ArrayList<Department>();
+		Collections.addAll(deptList,new Department("Marketing"));
+		employeePayrollService.addEmployeeToPayrollTable("Mohan", "M", 700000.00, LocalDate.now(),deptList);
+		boolean result = employeePayrollService.checkEmployeePayrollInSyncWithDB("Hardik");
+		assertTrue(result);
+	}
 	
+	@Test //UC 12
+	public void givenEmployeePayroll_WhenUpdatedRemoveFromTheList() throws SQLException {
+		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
+		List<EmployeePayrollData> employeePayrollData = new ArrayList<>();
+		employeePayrollData = employeePayrollService.readEmployeePayrollData(IOService.DB_IO);
+		employeePayrollService.removeEmployeeFromPayroll(employeePayrollData.get(5).getId());
+		boolean result = employeePayrollService.checkEmployeePayrollInSyncWithDB("Hardik");
+		assertFalse(result);
+	}
 	
 	
 
