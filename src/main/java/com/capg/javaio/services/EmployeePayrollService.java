@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -104,6 +105,11 @@ public class EmployeePayrollService {
 		
 		return employeePayrollDBService.getEmployeeSalaryByAggrgation(methodType, gender);
 		 
+	}
+	public Map<String, Double> readAvergaeSalaryByGender(IOService ioService) throws SQLException {
+		if(ioService.equals(IOService.DB_IO))
+			return employeePayrollDBService.getAverageSalaryByGender();
+		return null;
 	}
 
 	

@@ -9,7 +9,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.capg.javaio.enums.AggregateFunctions;
 import com.capg.javaio.exceptions.CustomMySqlException;
@@ -166,6 +168,21 @@ public class EmployeePayrollDBService {
 			}
 			return agg;
 		}
+	}
+
+	public Map<String, Double> getAverageSalaryByGender() throws SQLException {
+		String sql = "Select gender,AVG(salary) as avg_salary from temp_payroll_table group by gender;";
+		Map<String,Double> genderToAverageMap = new HashMap<>();
+		try(Connection connection = getConnection()){
+			Statement statement = connection.createStatement();
+			ResultSet resultSet = statement.executeQuery(sql);
+			while(resultSet.next()) {
+				String gender = resultSet.getString("gender");
+				double salary = resultSet.getDouble("avg_salary");
+				genderToAverageMap.put(gender, salary);
+			}
+		}
+		return genderToAverageMap;
 	}
 	
 	

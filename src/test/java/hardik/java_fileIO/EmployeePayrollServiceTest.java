@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -81,6 +82,7 @@ public class EmployeePayrollServiceTest {
 		}
 	}
 	
+
 	@Test //DB UC6
 	public void givenEmployeePayrollInDB_ShouldReturnAggregateFunctions() throws CustomMySqlException {
 		try {
@@ -95,5 +97,15 @@ public class EmployeePayrollServiceTest {
 			throw new CustomMySqlException(e.getMessage(), ExceptionType.NO_DATA_FOUND);
 		}
 	}
+	
+	
+	@Test //DBUC6 Average
+	public void givenEmployeePayrollInDB_ShouldReturnAverageByGender() throws SQLException {
+		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
+		employeePayrollService.readEmployeePayrollData(IOService.DB_IO);
+		Map<String,Double> averageSalaryByGender = employeePayrollService.readAvergaeSalaryByGender(IOService.DB_IO);
+		assertTrue(averageSalaryByGender.get("M").equals(300000.00) && averageSalaryByGender.get("F").equals(250000.00));
+	}
+	
 
 }
