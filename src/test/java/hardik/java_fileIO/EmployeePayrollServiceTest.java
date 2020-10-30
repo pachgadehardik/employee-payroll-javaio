@@ -81,63 +81,60 @@ public class EmployeePayrollServiceTest {
 		try {
 			EmployeePayrollService employeePayrollService = new EmployeePayrollService();
 			employeePayrollService.readEmployeePayrollData(IOService.DB_IO);
-			int recordCount = employeePayrollService.getSalaryBasedOnDateRange("2020-01-01","2020-12-01").size();
+			int recordCount = employeePayrollService.getSalaryBasedOnDateRange("2020-01-01", "2020-12-01").size();
 			assertEquals(2, recordCount);
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			throw new CustomMySqlException(e.getMessage(), ExceptionType.NO_DATA_FOUND);
 		}
 	}
-	
 
-	@Test //DB UC6
+	@Test // DB UC6
 	public void givenEmployeePayrollInDB_ShouldReturnAggregateFunctions() throws CustomMySqlException {
 		try {
 			EmployeePayrollService employeePayrollService = new EmployeePayrollService();
 			employeePayrollService.readEmployeePayrollData(IOService.DB_IO);
-			assertEquals(600000.0,employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.SUM,"M"));
-			assertEquals(300000.0,employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.AVERAGE,"M"));
-			assertEquals(1.0,employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.COUNT,"F"));
-			assertEquals(100000.0,employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.MIN,"M"));
-			assertEquals(500000.0,employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.MAX,"M"));
-		}catch(SQLException e) {
+			assertEquals(600000.0, employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.SUM, "M"));
+			assertEquals(300000.0, employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.AVERAGE, "M"));
+			assertEquals(1.0, employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.COUNT, "F"));
+			assertEquals(100000.0, employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.MIN, "M"));
+			assertEquals(500000.0, employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.MAX, "M"));
+		} catch (SQLException e) {
 			throw new CustomMySqlException(e.getMessage(), ExceptionType.NO_DATA_FOUND);
 		}
 	}
-	
-	
-	@Test //DBUC6 Average
+
+	@Test // DBUC6 Average
 	public void givenEmployeePayrollInDB_ShouldReturnAverageByGender() throws SQLException {
 		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
 		employeePayrollService.readEmployeePayrollData(IOService.DB_IO);
-		Map<String,Double> averageSalaryByGender = employeePayrollService.readAvergaeSalaryByGender(IOService.DB_IO);
-		assertTrue(averageSalaryByGender.get("M").equals(300000.00) && averageSalaryByGender.get("F").equals(250000.00));
+		Map<String, Double> averageSalaryByGender = employeePayrollService.readAvergaeSalaryByGender(IOService.DB_IO);
+		assertTrue(
+				averageSalaryByGender.get("M").equals(300000.00) && averageSalaryByGender.get("F").equals(250000.00));
 	}
-	
-	
-	@Test //DBUC 7 & 8 inserting employee
+
+	@Test // DBUC 7 & 8 inserting employee
 	public void givenEmployee_WhenAdded_Should_SyncWithDB() throws SQLException {
 		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
 		employeePayrollService.readEmployeePayrollData(IOService.DB_IO);
 		List<Department> deptList = new ArrayList<Department>();
 		deptList.add(new Department("Sales"));
-		employeePayrollService.addEmployeeToPayrollTable("Jane", "F",340000.00, LocalDate.now(), deptList);
+		employeePayrollService.addEmployeeToPayrollTable("Jane", "F", 340000.00, LocalDate.now(), deptList);
 		boolean result = employeePayrollService.checkEmployeePayrollInSyncWithDB("Jane");
 		assertTrue(result);
 	}
-		
-	@Test //Implementing UC9 to UC 11 ER
+
+	@Test // Implementing UC9 to UC 11 ER
 	public void givenEmployee_WhenAddedShouldSyncWithDB() throws SQLException {
 		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
 		employeePayrollService.readEmployeePayrollData(IOService.DB_IO);
 		List<Department> deptList = new ArrayList<Department>();
-		Collections.addAll(deptList,new Department("Marketing"));
-		employeePayrollService.addEmployeeToPayrollTable("Mohan", "M", 700000.00, LocalDate.now(),deptList);
+		Collections.addAll(deptList, new Department("Marketing"));
+		employeePayrollService.addEmployeeToPayrollTable("Mohan", "M", 700000.00, LocalDate.now(), deptList);
 		boolean result = employeePayrollService.checkEmployeePayrollInSyncWithDB("Hardik");
 		assertTrue(result);
 	}
-	
-	@Test //UC 12
+
+	@Test // UC 12
 	public void givenEmployeePayroll_WhenUpdatedRemoveFromTheList() throws SQLException {
 		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
 		List<EmployeePayrollData> employeePayrollData = new ArrayList<>();
@@ -146,29 +143,26 @@ public class EmployeePayrollServiceTest {
 		boolean result = employeePayrollService.checkEmployeePayrollInSyncWithDB("Hardik");
 		assertFalse(result);
 	}
-	
-	@Test //MultiThreading UC1 UC2 UC3 UC4
+
+	@Test // MultiThreading UC1 UC2 UC3 UC4
 	public void given4Employees_WhenAddedTo_DB_Should_MatchEmployeeEntries() throws SQLException {
 		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
 		EmployeePayrollData[] employeePayrollData = {
-				new EmployeePayrollData(0, "Jeff", 100000.0, LocalDate.now(),"M"),
-				new EmployeePayrollData(0, "MArk", 200000.0, LocalDate.now(),"M"),
-				new EmployeePayrollData(0, "Elon", 300000.0, LocalDate.now(),"M"),
-				new EmployeePayrollData(0, "Mukesh", 400000.0, LocalDate.now(),"M"),
-				
+				new EmployeePayrollData(0, "Jeff", 100000.0, LocalDate.now(), "M"),
+				new EmployeePayrollData(0, "MArk", 200000.0, LocalDate.now(), "M"),
+				new EmployeePayrollData(0, "Elon", 300000.0, LocalDate.now(), "M"),
+				new EmployeePayrollData(0, "Mukesh", 400000.0, LocalDate.now(), "M"),
+
 		};
 		employeePayrollService.readEmployeePayrollData(IOService.DB_IO);
 		Instant start = Instant.now();
 		employeePayrollService.addEmployeeToPayrollTable(Arrays.asList(employeePayrollData));
 		Instant end = Instant.now();
-		System.out.println("Duration Without Thread: "+java.time.Duration.between(start, end));
-		Instant threadStart = Instant.now(); 
+		System.out.println("Duration Without Thread: " + java.time.Duration.between(start, end));
+		Instant threadStart = Instant.now();
 		employeePayrollService.addEmployeeToPayrollWithThreads(Arrays.asList(employeePayrollData));
 		Instant threadEnd = Instant.now();
-		System.out.println("Duration With Thread: "+java.time.Duration.between(threadStart, threadEnd));
+		System.out.println("Duration With Thread: " + java.time.Duration.between(threadStart, threadEnd));
 		assertEquals(5, employeePayrollService.countEntries(IOService.DB_IO));
 	}
-	
-	
-
 }
