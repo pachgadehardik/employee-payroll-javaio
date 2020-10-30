@@ -23,6 +23,8 @@ import com.capg.javaio.model.EmployeePayrollData;
 public class EmployeePayrollDBService {
 
 //	static List<EmployeePayrollData> employeePayrollList;
+	private static int connectionCounter =0;
+	
 	private static EmployeePayrollDBService employeePayrollDBService;
 	private static PreparedStatement employeePayrollDataStatement;
 
@@ -35,7 +37,8 @@ public class EmployeePayrollDBService {
 		return employeePayrollDBService;
 	}
 
-	private static Connection getConnection() {
+	private static synchronized Connection getConnection() {
+		connectionCounter++;
 		final String JDBC_DRIVER = "com.mysql.cj.jdbc.Driver";
 		final String DB_URL = "jdbc:mysql://localhost:3306/payroll_service?useSSL=false";
 
@@ -51,9 +54,9 @@ public class EmployeePayrollDBService {
 			throw new IllegalStateException("Cant find another classpath!", e);
 		}
 		try {
-//			System.out.println("Conecting to dbs : " + DB_URL);
+			System.out.println("Processing thread: "+Thread.currentThread().getName()+" Connecting to database with ID: "+connectionCounter);
 			conn = DriverManager.getConnection(DB_URL, USER, PASS);
-//			System.out.println("Connection is Successfull" + conn);
+			System.out.println("Processing thread: "+Thread.currentThread().getName()+" ID: "+connectionCounter+" Connection is success!!"+conn);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

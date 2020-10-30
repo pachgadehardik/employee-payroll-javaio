@@ -147,7 +147,7 @@ public class EmployeePayrollServiceTest {
 		assertFalse(result);
 	}
 	
-	@Test //MultiThreading UC1 and UC2
+	@Test //MultiThreading UC1 UC2 UC3 UC4
 	public void given4Employees_WhenAddedTo_DB_Should_MatchEmployeeEntries() throws SQLException {
 		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
 		EmployeePayrollData[] employeePayrollData = {
