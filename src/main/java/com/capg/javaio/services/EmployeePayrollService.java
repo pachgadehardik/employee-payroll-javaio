@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -59,6 +60,8 @@ public class EmployeePayrollService {
 	public long countEntries(IOService ioService) {
 		if (ioService.equals(IOService.FILE_IO))
 			return new EmployeePayrollFileIOService().countEntries();
+		if(ioService.equals(IOService.DB_IO))
+			return employeePayrollList.size();
 		return 0;
 	}
 
@@ -115,9 +118,63 @@ public class EmployeePayrollService {
 	public void addEmployeeToPayrollTable(String name, String gender ,double salary, LocalDate startDate, List<Department> deptList) throws SQLException {
 		employeePayrollList.add(employeePayrollDBService.addEmployeeToPayrollTable(name,salary,startDate,gender,deptList));
 	}
+	
+	/**
+	 * @param name
+	 * @param gender
+	 * @param salary
+	 * @param startDate
+	 * @throws SQLException
+	 * only for Multithreading understanding purpose
+	 */
+	public void addEmployeeToPayrollTableUC7(String name, String gender ,double salary, LocalDate startDate) throws SQLException {
+		employeePayrollList.add(employeePayrollDBService.addEmployeeToPayrollTableUC7(name,salary,startDate,gender));
+	}
 	public void removeEmployeeFromPayroll(int id) throws CustomMySqlException {
 		employeePayrollDBService.updatePayrollData(id,employeePayrollList);
 	}
+	
+	public void addEmployeeToPayrollTable(List<EmployeePayrollData> asList) {
+		asList.forEach(employeePayrollData -> {
+			System.out.println("Employee BEing Added : " + employeePayrollData.getName());
+			try {
+				this.addEmployeeToPayrollTableUC7(employeePayrollData.getName(), employeePayrollData.getGender(),
+						employeePayrollData.getSalary(), employeePayrollData.getStartDate());
+				System.out.println("Employee Added: " + employeePayrollData.getName());
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}); 
+		System.out.println(this.employeePayrollList);
+	}
 
+	public void addEmployeeToPayrollWithThreads(List<EmployeePayrollData> employeePayrollDataList) {
+		Map<Integer,Boolean> employeeAdditionStatus = new HashMap<Integer, Boolean>();
+		employeePayrollDataList.forEach(employeePayrollData ->{
+			Runnable task = () -> {
+				employeeAdditionStatus.put(employeePayrollData.hashCode(),false);
+				System.out.println("Employee Being Added: "+Thread.currentThread().getName());
+				try {
+					this.addEmployeeToPayrollTableUC7(employeePayrollData.getName(), employeePayrollData.getGender(),
+							employeePayrollData.getSalary(), employeePayrollData.getStartDate());
+					employeeAdditionStatus.put(employeePayrollData.hashCode(), true);
+					System.out.println("Employee Added : "+Thread.currentThread().getName());
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			};
+			Thread thread = new Thread(task,employeePayrollData.getName());
+			thread.start();
+			
+		});
+		while(employeeAdditionStatus.containsValue(false)) {
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		System.out.println(this.employeePayrollList);
+	}
 	
 }

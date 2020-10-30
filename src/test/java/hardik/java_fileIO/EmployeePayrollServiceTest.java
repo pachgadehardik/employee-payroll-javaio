@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.sql.SQLException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,6 +22,7 @@ import com.capg.javaio.model.Department;
 import com.capg.javaio.model.EmployeePayrollData;
 import com.capg.javaio.services.EmployeePayrollService;
 import com.capg.javaio.services.EmployeePayrollService.IOService;
+import com.google.protobuf.Duration;
 
 public class EmployeePayrollServiceTest {
 
@@ -143,6 +145,28 @@ public class EmployeePayrollServiceTest {
 		employeePayrollService.removeEmployeeFromPayroll(employeePayrollData.get(5).getId());
 		boolean result = employeePayrollService.checkEmployeePayrollInSyncWithDB("Hardik");
 		assertFalse(result);
+	}
+	
+	@Test //MultiThreading UC1 and UC2
+	public void given4Employees_WhenAddedTo_DB_Should_MatchEmployeeEntries() throws SQLException {
+		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
+		EmployeePayrollData[] employeePayrollData = {
+				new EmployeePayrollData(0, "Jeff", 100000.0, LocalDate.now(),"M"),
+				new EmployeePayrollData(0, "MArk", 200000.0, LocalDate.now(),"M"),
+				new EmployeePayrollData(0, "Elon", 300000.0, LocalDate.now(),"M"),
+				new EmployeePayrollData(0, "Mukesh", 400000.0, LocalDate.now(),"M"),
+				
+		};
+		employeePayrollService.readEmployeePayrollData(IOService.DB_IO);
+		Instant start = Instant.now();
+		employeePayrollService.addEmployeeToPayrollTable(Arrays.asList(employeePayrollData));
+		Instant end = Instant.now();
+		System.out.println("Duration Without Thread: "+java.time.Duration.between(start, end));
+		Instant threadStart = Instant.now(); 
+		employeePayrollService.addEmployeeToPayrollWithThreads(Arrays.asList(employeePayrollData));
+		Instant threadEnd = Instant.now();
+		System.out.println("Duration With Thread: "+java.time.Duration.between(threadStart, threadEnd));
+		assertEquals(5, employeePayrollService.countEntries(IOService.DB_IO));
 	}
 	
 	

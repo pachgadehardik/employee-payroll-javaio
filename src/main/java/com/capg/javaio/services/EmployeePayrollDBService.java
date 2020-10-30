@@ -46,14 +46,14 @@ public class EmployeePayrollDBService {
 		Statement stmt = null;
 		try {
 			Class.forName(JDBC_DRIVER);
-			System.out.println("Driver Loaded!");
+//			System.out.println("Driver Loaded!");
 		} catch (ClassNotFoundException e) {
 			throw new IllegalStateException("Cant find another classpath!", e);
 		}
 		try {
-			System.out.println("Conecting to dbs : " + DB_URL);
+//			System.out.println("Conecting to dbs : " + DB_URL);
 			conn = DriverManager.getConnection(DB_URL, USER, PASS);
-			System.out.println("Connection is Successfull" + conn);
+//			System.out.println("Connection is Successfull" + conn);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
