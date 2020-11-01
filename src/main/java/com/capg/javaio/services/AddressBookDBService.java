@@ -214,7 +214,6 @@ public class AddressBookDBService {
 
 	public int getCountByStates(String state) {
 		int numberRow = 0;
-		List<ContactData> listContact = null;
 		try (Connection conn = this.getConnection()) {
 			String sql = "select count(*) from contact_table where state = ? group by state";
 			PreparedStatement stmt = conn.prepareStatement(sql);

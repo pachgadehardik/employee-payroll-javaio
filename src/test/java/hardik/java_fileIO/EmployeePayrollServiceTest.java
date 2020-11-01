@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -147,22 +148,38 @@ public class EmployeePayrollServiceTest {
 	@Test // MultiThreading UC1 UC2 UC3 UC4
 	public void given4Employees_WhenAddedTo_DB_Should_MatchEmployeeEntries() throws SQLException {
 		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
+		List<Department> deptList = new ArrayList<Department>();
+		Collections.addAll(deptList, new Department("Marketing"));
 		EmployeePayrollData[] employeePayrollData = {
-				new EmployeePayrollData(0, "Jeff", 100000.0, LocalDate.now(), "M"),
-				new EmployeePayrollData(0, "MArk", 200000.0, LocalDate.now(), "M"),
-				new EmployeePayrollData(0, "Elon", 300000.0, LocalDate.now(), "M"),
-				new EmployeePayrollData(0, "Mukesh", 400000.0, LocalDate.now(), "M"),
+				new EmployeePayrollData(0, "Jeff", 100000.0, LocalDate.now(), "M","Amazon",deptList),
+				new EmployeePayrollData(0, "MArk", 200000.0, LocalDate.now(), "M","Amazon",deptList),
+				new EmployeePayrollData(0, "Elon", 300000.0, LocalDate.now(), "M","Amazon",deptList),
+				new EmployeePayrollData(0, "Mukesh", 400000.0, LocalDate.now(), "M","Amazon",deptList),
 
 		};
 		employeePayrollService.readEmployeePayrollData(IOService.DB_IO);
-		Instant start = Instant.now();
-		employeePayrollService.addEmployeeToPayrollTable(Arrays.asList(employeePayrollData));
-		Instant end = Instant.now();
-		System.out.println("Duration Without Thread: " + java.time.Duration.between(start, end));
 		Instant threadStart = Instant.now();
 		employeePayrollService.addEmployeeToPayrollWithThreads(Arrays.asList(employeePayrollData));
 		Instant threadEnd = Instant.now();
 		System.out.println("Duration With Thread: " + java.time.Duration.between(threadStart, threadEnd));
 		assertEquals(5, employeePayrollService.countEntries(IOService.DB_IO));
 	}
+	
+	/**
+	 * @throws SQLException
+	 * Updating multiple Salaries using MUltiThreading
+	 */
+	@Test
+	public void givenEmployess_WhenUpdated_ShouldHappenProperly() throws SQLException {
+		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
+		Object[][] stringArr = {
+				new Object[] {"Jeff",1231231.00},
+				new Object[] {"Mark",989898.00}};
+		employeePayrollService.readEmployeePayrollData(IOService.DB_IO);
+		employeePayrollService.updateEmployeeSalaries(Arrays.asList(stringArr));
+		assertEquals(1231231.00, employeePayrollService.filterData("Jeff").getSalary());
+	}
+	
+	
+	
 }

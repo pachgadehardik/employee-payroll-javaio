@@ -12,6 +12,10 @@ public class EmployeePayrollData {
 	private String gender;
 	private String companyName;
 	private List<Department> departments;
+
+	public EmployeePayrollData() {
+	}
+
 	public EmployeePayrollData(int id, String name, Double salary) {
 		this.id = id;
 		this.name = name;
@@ -19,21 +23,22 @@ public class EmployeePayrollData {
 	}
 
 	public EmployeePayrollData(int id, String name, Double salary, LocalDate startDate) {
-		this(id,name,salary);
+		this(id, name, salary);
 		this.startDate = startDate;
 	}
-	
+
 	public EmployeePayrollData(int id, String name, Double salary, LocalDate startDate, String gender) {
-		this(id,name,salary,startDate);
+		this(id, name, salary, startDate);
 		this.gender = gender;
 	}
-	
-	public EmployeePayrollData(int id,String name, Double salary, LocalDate startDate, String gender, String companyName, List<Department> departments) {
-		this(id,name,salary,startDate,gender);
+
+	public EmployeePayrollData(int id, String name, Double salary, LocalDate startDate, String gender,
+			String companyName, List<Department> departments) {
+		this(id, name, salary, startDate, gender);
 		this.companyName = companyName;
 		this.departments = departments;
 	}
-	
+
 	public int getId() {
 		return id;
 	}
@@ -57,7 +62,7 @@ public class EmployeePayrollData {
 	public void setSalary(Double salary) {
 		this.salary = salary;
 	}
-	
+
 	public LocalDate getStartDate() {
 		return startDate;
 	}
@@ -74,6 +79,12 @@ public class EmployeePayrollData {
 		this.gender = gender;
 	}
 
+	@Override
+	public String toString() {
+		return "EmployeePayrollData [id=" + id + ", name=" + name + ", salary=" + salary + ", startDate=" + startDate
+				+ ", gender=" + gender + ", companyName=" + companyName + ", departments=" + departments + "]";
+	}
+
 	public String getCompanyName() {
 		return companyName;
 	}
@@ -81,8 +92,6 @@ public class EmployeePayrollData {
 	public void setCompanyName(String companyName) {
 		this.companyName = companyName;
 	}
-
-	
 
 	public List<Department> getDepartments() {
 		return departments;
@@ -101,33 +110,9 @@ public class EmployeePayrollData {
 		if (getClass() != obj.getClass())
 			return false;
 		EmployeePayrollData other = (EmployeePayrollData) obj;
-		if (gender == null) {
-			if (other.gender != null)
-				return false;
-		} else if (!gender.equals(other.gender))
-			return false;
-		if (id != other.id)
-			return false;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		if (salary == null) {
-			if (other.salary != null)
-				return false;
-		} else if (!salary.equals(other.salary))
-			return false;
-		if (startDate == null) {
-			if (other.startDate != null)
-				return false;
-		} else if (!startDate.equals(other.startDate))
-			return false;
-		return true;
-	}
-	
-	
-	
-	
+		return Integer.compare(this.id, other.id) == 0 && this.name.equals(other.name)
+				&& this.gender.equals(other.gender) && Double.compare(this.salary, other.salary) == 0
+				&& this.startDate.compareTo(other.startDate) == 0;
 
+	}
 }

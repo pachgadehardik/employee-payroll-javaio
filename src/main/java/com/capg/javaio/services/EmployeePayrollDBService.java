@@ -14,6 +14,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.apache.log4j.xml.DOMConfigurator;
+
 import com.capg.javaio.enums.AggregateFunctions;
 import com.capg.javaio.exceptions.CustomMySqlException;
 import com.capg.javaio.exceptions.CustomMySqlException.ExceptionType;
@@ -22,12 +26,13 @@ import com.capg.javaio.model.EmployeePayrollData;
 
 public class EmployeePayrollDBService {
 
-//	static List<EmployeePayrollData> employeePayrollList;
 	private static int connectionCounter =0;
 	
 	private static EmployeePayrollDBService employeePayrollDBService;
 	private static PreparedStatement employeePayrollDataStatement;
+	private static final Logger logger = LogManager.getLogger(EmployeePayrollDBService.class);
 
+	
 	private EmployeePayrollDBService() {
 	}
 
@@ -38,6 +43,7 @@ public class EmployeePayrollDBService {
 	}
 
 	private static synchronized Connection getConnection() {
+		DOMConfigurator.configure("log4j.xml");
 		connectionCounter++;
 		final String JDBC_DRIVER = "com.mysql.cj.jdbc.Driver";
 		final String DB_URL = "jdbc:mysql://localhost:3306/payroll_service?useSSL=false";
@@ -47,16 +53,15 @@ public class EmployeePayrollDBService {
 		final String PASS = "hardik@#123";
 		Connection conn = null;
 		Statement stmt = null;
-		try {
+		try { 
 			Class.forName(JDBC_DRIVER);
-//			System.out.println("Driver Loaded!");
 		} catch (ClassNotFoundException e) {
 			throw new IllegalStateException("Cant find another classpath!", e);
 		}
 		try {
-			System.out.println("Processing thread: "+Thread.currentThread().getName()+" Connecting to database with ID: "+connectionCounter);
+			logger.info("Processing thread: "+Thread.currentThread().getName()+" Connecting to database with ID: "+connectionCounter);
 			conn = DriverManager.getConnection(DB_URL, USER, PASS);
-			System.out.println("Processing thread: "+Thread.currentThread().getName()+" ID: "+connectionCounter+" Connection is success!!"+conn);
+			logger.info("Processing thread: "+Thread.currentThread().getName()+" ID: "+connectionCounter+" Connection is success!!"+conn);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -104,9 +109,10 @@ public class EmployeePayrollDBService {
 			while (result.next()) {
 				int id = result.getInt("emp_id");
 				String name = result.getString("name");
+				String gender = result.getString("gender");
 				double salary = result.getDouble("salary");
 				LocalDate startDate = result.getDate("start_date").toLocalDate();
-				employeeList.add(new EmployeePayrollData(id, name, salary, startDate));
+				employeeList.add(new EmployeePayrollData(id, name, salary, startDate,gender));
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -155,7 +161,6 @@ public class EmployeePayrollDBService {
 			pStmt.setDate(2, java.sql.Date.valueOf(date2));
 			ResultSet result = pStmt.executeQuery();
 			List<EmployeePayrollData> resultlist = getEmployeePayrollData(result);
-			System.out.println("Employee records after Query: " + resultlist.toString());
 			return resultlist;
 		} catch (SQLException e) {
 			throw new CustomMySqlException(e.getMessage(), ExceptionType.OTHER_TYPE);
@@ -255,6 +260,7 @@ public class EmployeePayrollDBService {
 		} 
 		
 		try(Statement statement = conn.createStatement()){
+			DOMConfigurator.configure("log4j.xml");
 			for(Department deptName : deptList) {
 				String sql;
 				if(deptName.getDeptName() == "Sales")
@@ -263,7 +269,7 @@ public class EmployeePayrollDBService {
 					sql = String.format("Insert into employee_department (emp_id,dept_id) values ('%s','%s');",emp_id,2);
 				int rowAffected = statement.executeUpdate(sql);
 				if(rowAffected ==1)
-					System.out.println("Query FIred!");
+					logger.info("Query FIred!");
 				}
 			employeePayrollData = new EmployeePayrollData(emp_id, name, salary, startDate);
 			employeePayrollData.setDepartments(deptList);
@@ -314,5 +320,71 @@ public class EmployeePayrollDBService {
 			}
 		}
 	}
+	
+	
 
+	public void updateEmployeeSalary(String name,double salary, List<EmployeePayrollData> list) throws SQLException {
+		DOMConfigurator.configure("log4j.xml");
+		Connection conn;
+		try {
+			conn = getConnection();
+			logger.info("Connection Established!!!!!!!!!"+name);
+			conn.setAutoCommit(false);
+		}catch (SQLException e) {
+			throw new CustomMySqlException(e.getMessage(), ExceptionType.OTHER_TYPE);
+		}
+		try {
+			String sql = "update employee set salary = ? where name = ?";
+			PreparedStatement pStmt = conn.prepareStatement(sql);
+			pStmt.setDouble(1, salary);
+			pStmt.setString(2, name);
+			int rowAffected = pStmt.executeUpdate();
+
+			if (rowAffected == 1) {			
+				logger.info("1st Query is success!!");
+			}
+		}catch (SQLException e) {
+			conn.rollback();
+			throw new CustomMySqlException(e.getMessage(), ExceptionType.NO_DATA_FOUND);
+		}
+		
+		try{
+			double deductions = salary * 0.2;
+			double taxablePay = salary - deductions;
+			double tax = taxablePay * 0.1;
+			double netPay = salary - tax;
+			String sql = "Update payroll set basic_pay = ?, income_tax = ?, deduction= ?, taxable_pay= ?, net_pay= ? where payroll_id = (select emp_id from employee where name = ?)";
+			PreparedStatement preparedStatement = conn.prepareStatement(sql);
+			
+			preparedStatement.setDouble(1,salary);
+			preparedStatement.setDouble(2, tax);
+			preparedStatement.setDouble(3, deductions);
+			preparedStatement.setDouble(4, taxablePay);
+			preparedStatement.setDouble(5, netPay);
+			preparedStatement.setString(6,name);
+			int rowAffected = preparedStatement.executeUpdate();
+			if (rowAffected != 1)
+				conn.rollback();
+			logger.info("2nd QUery FireD!!s");
+			EmployeePayrollData employeePayrollData = list.stream().filter(obj -> name==obj.getName()).findFirst().orElse(null);
+			if(employeePayrollData != null) {
+				employeePayrollData.setSalary(salary);
+			}
+			
+		} catch (SQLException e) {
+			conn.rollback();
+			throw new CustomMySqlException(e.getMessage(), ExceptionType.OTHER_TYPE);
+		} 
+		finally {
+			if (conn != null) {
+				try {
+					conn.commit();
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+	}
 }

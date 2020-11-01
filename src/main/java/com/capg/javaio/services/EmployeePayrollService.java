@@ -1,6 +1,5 @@
 package com.capg.javaio.services;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -8,7 +7,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.apache.log4j.xml.DOMConfigurator;
+import org.w3c.dom.DOMConfiguration;
 
 import com.capg.javaio.enums.AggregateFunctions;
 import com.capg.javaio.exceptions.CustomMySqlException;
@@ -23,7 +26,7 @@ public class EmployeePayrollService {
 
 	private List<EmployeePayrollData> employeePayrollList = null;
 	EmployeePayrollDBService employeePayrollDBService;
-	
+	private static final Logger logger = LogManager.getLogger(EmployeePayrollService.class);
 	
 	public EmployeePayrollService() {
 		employeePayrollDBService = EmployeePayrollDBService.getInstance();
@@ -155,8 +158,8 @@ public class EmployeePayrollService {
 				employeeAdditionStatus.put(employeePayrollData.hashCode(),false);
 				System.out.println("Employee Being Added: "+Thread.currentThread().getName());
 				try {
-					this.addEmployeeToPayrollTableUC7(employeePayrollData.getName(), employeePayrollData.getGender(),
-							employeePayrollData.getSalary(), employeePayrollData.getStartDate());
+					this.addEmployeeToPayrollTable(employeePayrollData.getName(), employeePayrollData.getGender(),
+							employeePayrollData.getSalary(), employeePayrollData.getStartDate(),employeePayrollData.getDepartments());
 					employeeAdditionStatus.put(employeePayrollData.hashCode(), true);
 					System.out.println("Employee Added : "+Thread.currentThread().getName());
 				} catch (SQLException e) {
@@ -176,5 +179,46 @@ public class EmployeePayrollService {
 		}
 		System.out.println(this.employeePayrollList);  
 	}
+	
+	public void updateEmployeeSalaries(List<Object[]> listObj) {
+		DOMConfigurator.configure("log4j.xml");
+		Map<Integer,Boolean> employeeAdditionStatus = new HashMap<Integer, Boolean>();
+		System.out.println("Employee PAyrol SIze: "+employeePayrollList.size());
+		listObj.forEach(obj ->{
+			Runnable task = () ->{
+				try {
+					employeeAdditionStatus.put(obj.hashCode(),false);
+					logger.info("INSIDE UPDATE---");
+					logger.info("Curretn Thread is :"+Thread.currentThread().getName());
+					employeePayrollDBService.getInstance().updateEmployeeSalary((String)obj[0],(Double) obj[1],employeePayrollList);
+					employeeAdditionStatus.put(obj.hashCode(),true);
+					logger.info("Thread Completed--"+Thread.currentThread().getName());
+				} catch (Exception e) {
+					e.printStackTrace();
+					logger.info(e.getMessage());
+				}
+			};
+			Thread thread = new Thread(task,(String)obj[0]);
+			logger.info("Thread NAme UPDATE---"+thread.getName());
+			thread.start();
+		});
+		
+		while(employeeAdditionStatus.containsValue(false)) {
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		System.out.println(employeePayrollList);
+	}
+	
+	public EmployeePayrollData filterData(String name) {
+	 
+		return employeePayrollList.stream().filter(obj -> name.equals(obj.getName())).findFirst().orElse(null);
+		
+	}
+	
+	
 	
 }
