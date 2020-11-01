@@ -4,16 +4,20 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.sql.SQLException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import org.junit.Test;
 
+import com.capg.javaio.model.ContactData;
 import com.capg.javaio.model.Email;
 import com.capg.javaio.model.Phone;
 import com.capg.javaio.services.AddressBookService;
+import com.capg.javaio.services.EmployeePayrollService.IOService;
 
 public class AddressBookServiceTest {
 
@@ -74,4 +78,20 @@ public class AddressBookServiceTest {
 		assertEquals(2, result);
 	}
 	
+	@Test
+	public void addMultipleContactsUsingThreadInDB() throws SQLException {
+		AddressBookService addressBookService = new AddressBookService();
+		ContactData[] contactDataArray = {
+				new ContactData(0, "Hardik", "P", "lakeshore greens", "Mumbai", "Maharashtra", "123432"),
+				new ContactData(0, "Kunal", "M", "Mahavir nagar", "Mumbai", "Maharashtra", "453432"),
+				new ContactData(0, "Aditya", "M", "akot", "Akola", "Maharashtra", "434432")
+		};
+		
+		addressBookService.readContactData();
+		Instant threadStart = Instant.now();
+		addressBookService.addContactToDBWithThreads(Arrays.asList(contactDataArray));
+		Instant threadEnd = Instant.now();
+		System.out.println("Duration With Thread: " + java.time.Duration.between(threadStart, threadEnd));
+		assertEquals(4, addressBookService.countEntries());
+	}
 }

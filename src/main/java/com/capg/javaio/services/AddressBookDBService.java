@@ -9,6 +9,10 @@ import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.xml.DOMConfigurator;
 
 import com.capg.javaio.exceptions.CustomMySqlException;
 import com.capg.javaio.exceptions.CustomMySqlException.ExceptionType;
@@ -20,7 +24,8 @@ public class AddressBookDBService {
 
 	static AddressBookDBService addressBookDBService;
 	private PreparedStatement contactDataStatement;
-
+	private static final org.apache.log4j.Logger logger = LogManager.getLogger(AddressBookDBService.class);
+	
 	private AddressBookDBService() {
 	}
 
@@ -121,21 +126,25 @@ public class AddressBookDBService {
 		}
 
 		try (Statement statement = conn.createStatement()) {
+			DOMConfigurator.configure("log4j.xml");
 			String sql = String.format(
 					"INSERT INTO contact_table (firstname,lastname,address,state,city,zip)"
 							+ "Values ('%s', '%s', '%s', '%s', '%s', '%s' );",
 					firstName, lastName, address, state, city, zip);
 			int rowAffected = statement.executeUpdate(sql, statement.RETURN_GENERATED_KEYS);
 			if (rowAffected == 1) {
+				logger.info("1st Query Executed");
 				ResultSet resultSet = statement.getGeneratedKeys();
 				if (resultSet.next())
 					contact_id = resultSet.getInt(1);
 			}
 		} catch (SQLException e) {
 			conn.rollback();
+			logger.info("GOCHI!!!!!!!!!!!!!!!!!");
 			throw new CustomMySqlException(e.getMessage(), ExceptionType.OTHER_TYPE);
 		}
-
+		
+		if(phoneList != null && emailList != null) {
 		try (Statement stmt = conn.createStatement()) {
 
 			for (int i = 0; i < phoneList.size(); i++) {
@@ -166,16 +175,19 @@ public class AddressBookDBService {
 		} catch (SQLException e) {
 			conn.rollback();
 			e.printStackTrace();
-		} finally {
+		}
+		}
+//		finally {
 			if (conn != null) {
 				try {
 					conn.commit();
 					conn.close();
+					logger.info("COnnection Comimmitted");
 				} catch (SQLException e) {
 					e.printStackTrace();
 				}
 			}
-		}
+//		}
 
 		return null;
 
