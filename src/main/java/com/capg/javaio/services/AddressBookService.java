@@ -2,6 +2,7 @@ package com.capg.javaio.services;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,10 +14,9 @@ import org.apache.log4j.xml.DOMConfigurator;
 import com.capg.javaio.exceptions.CustomMySqlException;
 import com.capg.javaio.model.ContactData;
 import com.capg.javaio.model.Email;
+import com.capg.javaio.model.EmployeePayrollData;
 import com.capg.javaio.model.Phone;
 import com.capg.javaio.services.EmployeePayrollService.IOService;
-
-
 
 public class AddressBookService {
 
@@ -24,54 +24,62 @@ public class AddressBookService {
 	AddressBookDBService addressBookDBService;
 	private static final Logger logger = LogManager.getLogger(AddressBookService.class);
 
-	
 	public List<ContactData> readContactData() throws SQLException {
 		this.contactDataList = addressBookDBService.readData();
 		return contactDataList;
 	}
-	
-	public AddressBookService()  {
+
+	public AddressBookService() {
 		addressBookDBService = AddressBookDBService.getInstance();
 	}
-	
+
+	public AddressBookService(List<ContactData> contactDataList) {
+		this();
+		this.contactDataList = new ArrayList<>(contactDataList);
+	}
+
 	public int getCount() {
 		return contactDataList.size();
 	}
 
 	public void addContactToTable(String firstName, String lastName, String address, String city, String state,
 			String zip, List<Phone> phoneList, List<Email> emailList) throws SQLException {
-		
-		contactDataList.add(addressBookDBService.addContactToTables(firstName,lastName,address,city,state,zip,phoneList,emailList));
+
+		contactDataList.add(addressBookDBService.addContactToTables(firstName, lastName, address, city, state, zip,
+				phoneList, emailList));
 	}
-	
+
 	public void addContactToTable(String firstName, String lastName, String address, String city, String state,
 			String zip) throws SQLException {
-		contactDataList.add(addressBookDBService.addContactToTables(firstName,lastName,address,city,state,zip,null,null));
+		contactDataList.add(
+				addressBookDBService.addContactToTables(firstName, lastName, address, city, state, zip, null, null));
 	}
 
 	public boolean checkContactInSyncWithDB(String name) throws CustomMySqlException {
-		List<ContactData> contactDataList =  addressBookDBService.getInstance().getContactDataInList(name);
-			return contactDataList.get(0).equals(getContactData(name));
-	}	
+		List<ContactData> contactDataList = addressBookDBService.getInstance().getContactDataInList(name);
+		return contactDataList.get(0).equals(getContactData(name));
+	}
 
-	private ContactData getContactData(String name) {
+	public ContactData getContactData(String name) {
 		ContactData temp = this.contactDataList.stream()
-				.filter(ContactDataItem -> ContactDataItem.getFirstName().equals(name)).findFirst()
-				.orElse(null);
+				.filter(ContactDataItem -> ContactDataItem.getFirstName().equals(name)).findFirst().orElse(null);
 		return temp;
 	}
 
-	public void updateContactData(String firstName, String lastName) {
-		int result = addressBookDBService.getInstance().updateContactDataUsingPreparedStatement(firstName,lastName);
-		if (result == 0)
-			return;
+	public void updateContactData(String firstName, String lastName, IOService ioService) {
+		if (ioService.equals(IOService.DB_IO)) {
+			int result = addressBookDBService.getInstance().updateContactDataUsingPreparedStatement(firstName,
+					lastName);
+			if (result == 0)
+				return;
+		}
 		ContactData contactData = this.getContactData(firstName);
 		if (contactData != null)
 			contactData.setLastName(lastName);
 	}
 
 	public int getRecordsByDates(LocalDate date1, LocalDate date2) {
-		List<ContactData> contactList = addressBookDBService.getInstance().getRecordsByDate(date1,date2);
+		List<ContactData> contactList = addressBookDBService.getInstance().getRecordsByDate(date1, date2);
 		return contactList.size();
 	}
 
@@ -82,11 +90,11 @@ public class AddressBookService {
 
 	public void addContactToDBWithThreads(List<ContactData> asList) {
 		DOMConfigurator.configure("log4j.xml");
-		Map<Integer,Boolean> contactAdditionStatus = new HashMap<Integer, Boolean>();
-		asList.forEach(contactData ->{
+		Map<Integer, Boolean> contactAdditionStatus = new HashMap<Integer, Boolean>();
+		asList.forEach(contactData -> {
 			Runnable task = () -> {
-			contactAdditionStatus.put(contactData.hashCode(),false);
-				logger.info("Contact Being Added: "+Thread.currentThread().getName());
+				contactAdditionStatus.put(contactData.hashCode(), false);
+				logger.info("Contact Being Added: " + Thread.currentThread().getName());
 				try {
 					logger.info("INSIDE TRY");
 					this.addContactToTable(contactData.getFirstName(), contactData.getLastName(),
@@ -98,11 +106,11 @@ public class AddressBookService {
 					e.printStackTrace();
 				}
 			};
-			Thread thread = new Thread(task,contactData.getFirstName());
+			Thread thread = new Thread(task, contactData.getFirstName());
 			thread.start();
-			
+
 		});
-		while(contactAdditionStatus.containsValue(false)) {
+		while (contactAdditionStatus.containsValue(false)) {
 			try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
@@ -111,9 +119,28 @@ public class AddressBookService {
 		}
 	}
 
+	public int countEntries(IOService restIo) {
+		return contactDataList.size();
+	}
+
 	public int countEntries() {
 		return contactDataList.size();
 	}
-	
-	
+
+	public void addContactToDB(ContactData contactData, IOService ioService) throws SQLException {
+		if (ioService.equals(IOService.DB_IO))
+			this.addContactToTable(contactData.getFirstName(), contactData.getLastName(), contactData.getAddress(),
+					contactData.getCity(), contactData.getState(), contactData.getZip(), contactData.getPhoneList(),
+					contactData.getEmailList());
+		else
+			contactDataList.add(contactData);
+	}
+
+	public void deleteFromCache(String firstName, IOService ioService) {
+		if(ioService.equals(IOService.REST_IO)) {
+			ContactData contactData = this.getContactData(firstName);
+			contactDataList.remove(contactData);
+		}
+	}
+
 }

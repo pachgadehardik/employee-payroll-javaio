@@ -18,6 +18,7 @@ import com.capg.javaio.model.ContactData;
 import com.capg.javaio.model.Email;
 import com.capg.javaio.model.Phone;
 import com.capg.javaio.services.AddressBookService;
+import com.capg.javaio.services.EmployeePayrollService.IOService;
 
 public class AddressBookServiceTest {
 
@@ -25,8 +26,8 @@ public class AddressBookServiceTest {
 	@Test
 	public void givenContactsFromDB_Should_ReturnCorrectCount() throws SQLException {
 		AddressBookService addressBookService = new AddressBookService();
-		addressBookService.readContactData();
-		assertEquals(4, addressBookService.getCount());
+		addressBookService.readContactData().forEach(System.out::print);
+		assertEquals(7, addressBookService.getCount());
 	}
 //	
 	/**
@@ -55,7 +56,7 @@ public class AddressBookServiceTest {
 	public void updateContactsToDB() throws SQLException {
 		AddressBookService addressBookService = new AddressBookService();
 		addressBookService.readContactData();
-		addressBookService.updateContactData("Mark","Zuckerberg");
+		addressBookService.updateContactData("Mark","Zuckerberg",IOService.DB_IO);
 		boolean result = addressBookService.checkContactInSyncWithDB("Mark");
 		assertTrue(result);
 	}
@@ -94,4 +95,6 @@ public class AddressBookServiceTest {
 		System.out.println("Duration With Thread: " + java.time.Duration.between(threadStart, threadEnd));
 		assertEquals(4, addressBookService.countEntries());
 	}
+	
+	
 }

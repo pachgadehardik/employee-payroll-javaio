@@ -182,6 +182,13 @@ public class ContactData {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return "ContactData [id=" + id + ", firstName=" + firstName + ", lastName=" + lastName + ", address=" + address
+				+ ", city=" + city + ", state=" + state + ", zip=" + zip + ", emailList=" + emailList + ", phoneList="
+				+ phoneList + ", dateAdded=" + dateAdded + "]";
+	}
+
 	
 
 }
