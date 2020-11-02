@@ -111,7 +111,7 @@ public class AddressBookService {
 		}
 	}
 
-	public Integer countEntries() {
+	public int countEntries() {
 		return contactDataList.size();
 	}
 	

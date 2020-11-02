@@ -17,6 +17,8 @@ import com.capg.javaio.enums.AggregateFunctions;
 import com.capg.javaio.exceptions.CustomMySqlException;
 import com.capg.javaio.model.Department;
 import com.capg.javaio.model.EmployeePayrollData;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 
 public class EmployeePayrollService {
 
@@ -33,7 +35,7 @@ public class EmployeePayrollService {
 	}
 	public EmployeePayrollService(List<EmployeePayrollData> employeePayrollList) {
 		this();
-		this.employeePayrollList = employeePayrollList;
+		this.employeePayrollList = new ArrayList<>(employeePayrollList);
 	}
 
 
@@ -65,6 +67,8 @@ public class EmployeePayrollService {
 			return new EmployeePayrollFileIOService().countEntries();
 		if(ioService.equals(IOService.DB_IO))
 			return employeePayrollList.size();
+		if(ioService.equals(IOService.REST_IO))
+			return employeePayrollList.size();
 		return 0;
 	}
 
@@ -86,8 +90,15 @@ public class EmployeePayrollService {
 		if (employeePayrollData != null)
 			employeePayrollData.setSalary(salary);
 	}
+	
+	public void updateEmployeeSalary(String name, double salary, IOService ioService) {
+		if(ioService.equals(IOService.REST_IO)) {
+			EmployeePayrollData employeePayrollData =  this.getEmployeePayrollData(name);
+			if(employeePayrollData!=null) employeePayrollData.setSalary(salary);
+		}
+	}
 
-	private EmployeePayrollData getEmployeePayrollData(String name) {
+	public EmployeePayrollData getEmployeePayrollData(String name) {
 		return this.employeePayrollList.stream()
 				.filter(EmployeePayrollDataItem -> EmployeePayrollDataItem.getName().equals(name)).findFirst()
 				.orElse(null);
@@ -122,6 +133,13 @@ public class EmployeePayrollService {
 		employeePayrollList.add(employeePayrollDBService.addEmployeeToPayrollTable(name,salary,startDate,gender,deptList));
 	}
 	
+	public void addEmployeeToPayroll(EmployeePayrollData employeePayrollData, IOService ioService) throws SQLException {
+		if(ioService.equals(IOService.DB_IO))
+			this.addEmployeeToPayrollTable(employeePayrollData.getName(), employeePayrollData.getGender(), employeePayrollData.getSalary(), employeePayrollData.getStartDate(),null);
+		else
+			employeePayrollList.add(employeePayrollData);
+	}
+	
 	/**
 	 * @param name
 	 * @param gender
@@ -144,6 +162,7 @@ public class EmployeePayrollService {
 				this.addEmployeeToPayrollTableUC7(employeePayrollData.getName(), employeePayrollData.getGender(),
 						employeePayrollData.getSalary(), employeePayrollData.getStartDate());
 				System.out.println("Employee Added: " + employeePayrollData.getName());
+				employeePayrollList.add(employeePayrollData);
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -217,6 +236,16 @@ public class EmployeePayrollService {
 	 
 		return employeePayrollList.stream().filter(obj -> name.equals(obj.getName())).findFirst().orElse(null);
 		
+	}
+	public String getDataInJsonFormat() {
+		String json = new Gson().toJson(employeePayrollList);
+		return json;
+	}
+	public void deleteFromCache(String name, IOService ioService) {
+		if(ioService.equals(IOService.REST_IO)) {
+			EmployeePayrollData employeePayrollData = this.getEmployeePayrollData(name);
+			employeePayrollList.remove(employeePayrollData);
+		}
 	}
 	
 	

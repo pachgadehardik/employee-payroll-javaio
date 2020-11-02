@@ -1,8 +1,8 @@
 package hardik.java_fileIO;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.sql.SQLException;
 import java.time.Instant;
@@ -10,11 +10,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import com.capg.javaio.enums.AggregateFunctions;
 import com.capg.javaio.exceptions.CustomMySqlException;
@@ -23,7 +22,6 @@ import com.capg.javaio.model.Department;
 import com.capg.javaio.model.EmployeePayrollData;
 import com.capg.javaio.services.EmployeePayrollService;
 import com.capg.javaio.services.EmployeePayrollService.IOService;
-import com.google.protobuf.Duration;
 
 public class EmployeePayrollServiceTest {
 
@@ -94,11 +92,11 @@ public class EmployeePayrollServiceTest {
 		try {
 			EmployeePayrollService employeePayrollService = new EmployeePayrollService();
 			employeePayrollService.readEmployeePayrollData(IOService.DB_IO);
-			assertEquals(600000.0, employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.SUM, "M"));
-			assertEquals(300000.0, employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.AVERAGE, "M"));
-			assertEquals(1.0, employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.COUNT, "F"));
-			assertEquals(100000.0, employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.MIN, "M"));
-			assertEquals(500000.0, employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.MAX, "M"));
+			assertEquals(Double.valueOf(600000.0), employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.SUM, "M"));
+			assertEquals(Double.valueOf(300000.0), employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.AVERAGE, "M"));
+			assertEquals(Double.valueOf(1.0), employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.COUNT, "F"));
+			assertEquals(Double.valueOf(100000.0), employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.MIN, "M"));
+			assertEquals(Double.valueOf(500000.0), employeePayrollService.getAggregateSalaryRecords(AggregateFunctions.MAX, "M"));
 		} catch (SQLException e) {
 			throw new CustomMySqlException(e.getMessage(), ExceptionType.NO_DATA_FOUND);
 		}
@@ -177,9 +175,16 @@ public class EmployeePayrollServiceTest {
 				new Object[] {"Mark",989898.00}};
 		employeePayrollService.readEmployeePayrollData(IOService.DB_IO);
 		employeePayrollService.updateEmployeeSalaries(Arrays.asList(stringArr));
-		assertEquals(1231231.00, employeePayrollService.filterData("Jeff").getSalary());
+		assertEquals(Double.valueOf(1231231.00), employeePayrollService.filterData("Jeff").getSalary());
 	}
 	
-	
+	@Test
+	public void convertDataToJsonFormat() throws SQLException {
+		EmployeePayrollService employeePayrollService = new EmployeePayrollService();
+		employeePayrollService.readEmployeePayrollData(IOService.DB_IO);
+		String json = employeePayrollService.getDataInJsonFormat();
+//		FileWriter fileWriter = new FileWriter("Student.json");
+		System.out.println(json);
+	}
 	
 }
