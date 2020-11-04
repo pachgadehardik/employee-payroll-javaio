@@ -13,12 +13,11 @@ import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.capg.javaio.exceptions.CustomMySqlException;
 import com.capg.javaio.model.ContactData;
 import com.capg.javaio.model.Email;
-import com.capg.javaio.model.EmployeePayrollData;
 import com.capg.javaio.model.Phone;
 import com.capg.javaio.services.AddressBookService;
-import com.capg.javaio.services.EmployeePayrollService;
 import com.capg.javaio.services.EmployeePayrollService.IOService;
 import com.google.gson.Gson;
 
@@ -92,6 +91,9 @@ public class RESTAssuredAddressBookJsonTest {
 		return response;		
 	}
 
+	/**
+	 * UC 22 read entries from jsonserver
+	 */
 	@Test
 	public void OnCallingList_ReturnContactlist() {
 		Response response = getResponse();
@@ -100,6 +102,10 @@ public class RESTAssuredAddressBookJsonTest {
 		response.then().body("firstName", Matchers.hasItems("Terissa", "Tejas", "Jake"));
 	}
 
+	/**
+	 * @throws SQLException
+	 * Adding Entry in addressBook jsonServer
+	 */
 	@Test
 	public void givenNewContact_WhenAddedShouldMatch201ResponseAndCount() throws SQLException {
 		AddressBookService addressBookService;
@@ -118,6 +124,9 @@ public class RESTAssuredAddressBookJsonTest {
 		assertEquals(4, addressBookService.countEntries(IOService.REST_IO));
 	}
 
+	/**
+	 * UC23 Add Multiple Entries to Server 
+	 */
 	@Test
 	public void addMultipleContactToServerUsingThreadShouleReturn201Code() {
 		AddressBookService addressBookService;
@@ -136,8 +145,12 @@ public class RESTAssuredAddressBookJsonTest {
 
 	}
 	
+	/**
+	 * @throws CustomMySqlException
+	 * UC 24 Updating entry in addressBook jsonserver
+	 */
 	@Test
-	public void givenNameForContact_WhenUpdated_ShouldReturn200Response() {
+	public void givenNameForContact_WhenUpdated_ShouldReturn200Response() throws CustomMySqlException {
 		AddressBookService addressBookService;
 		ContactData[] arrayOfContacts = getContactList();
 		addressBookService = new AddressBookService(Arrays.asList(arrayOfContacts));
@@ -145,10 +158,12 @@ public class RESTAssuredAddressBookJsonTest {
 		addressBookService.updateContactData("Aditya", "Malani(UpdatedSurname)", IOService.REST_IO);
 		ContactData contactData =  addressBookService.getContactData("Aditya");
 		Response respose = updateContactName(contactData);
-		int statusCode = respose.getStatusCode();
-		assertEquals(200, statusCode);
+		assertEquals(200, respose.getStatusCode());
 	}
 
+	/**
+	 * UC 25 Delete Entry in addressBook from server
+	 */
 	@Test
 	public void givenContactWhenDeletedShouldMatchResponse() {
 		AddressBookService addressBookService;
