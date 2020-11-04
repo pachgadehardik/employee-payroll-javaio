@@ -13,6 +13,7 @@ import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.capg.javaio.exceptions.CustomMySqlException;
 import com.capg.javaio.model.ContactData;
 import com.capg.javaio.model.Email;
 import com.capg.javaio.model.EmployeePayrollData;
@@ -137,12 +138,16 @@ public class RESTAssuredAddressBookJsonTest {
 	}
 	
 	@Test
-	public void givenNameForContact_WhenUpdated_ShouldReturn200Response() {
+	public void givenNameForContact_WhenUpdated_ShouldReturn200Response() throws CustomMySqlException {
 		AddressBookService addressBookService;
 		ContactData[] arrayOfContacts = getContactList();
 		addressBookService = new AddressBookService(Arrays.asList(arrayOfContacts));
 		
-		addressBookService.updateContactData("Aditya", "Malani(UpdatedSurname)", IOService.REST_IO);
+		try {
+			addressBookService.updateContactData("Aditya", "Malani(UpdatedSurname)", IOService.REST_IO);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		ContactData contactData =  addressBookService.getContactData("Aditya");
 		Response respose = updateContactName(contactData);
 		int statusCode = respose.getStatusCode();

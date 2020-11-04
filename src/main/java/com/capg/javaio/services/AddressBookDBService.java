@@ -60,14 +60,23 @@ public class AddressBookDBService {
 	public static List<ContactData> readData() throws SQLException {
 		String sql = "Select * from contact_table";
 		List<ContactData> contactList = new ArrayList<ContactData>();
-		Connection conn = getConnection();
+		try(Connection conn = getConnection()){
 		Statement statement = conn.createStatement();
 		ResultSet result = statement.executeQuery(sql);
 		contactList = getContactData(result);
-		conn.close();
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}
+//		conn.close();
 		return contactList;
 	}
 
+	public int getPrimaryKeyFromTable(String fname, String lname) {
+		
+		return 0;
+		
+	}
+	
 	private static List<ContactData> getContactData(ResultSet result) {
 		List<ContactData> contactList = new ArrayList<>();
 		try {
@@ -135,18 +144,19 @@ public class AddressBookDBService {
 			if (rowAffected == 1) {
 				logger.info("1st Query Executed");
 				ResultSet resultSet = statement.getGeneratedKeys();
-				if (resultSet.next())
+				 while(resultSet.next())
 					contact_id = resultSet.getInt(1);
+				 logger.info("Contact Id is :"+contact_id);
 			}
 		} catch (SQLException e) {
 			conn.rollback();
-			logger.info("GOCHI!!!!!!!!!!!!!!!!!");
+			logger.info("Errors!!!!!!!!!!!!!!!!!");
 			throw new CustomMySqlException(e.getMessage(), ExceptionType.OTHER_TYPE);
 		}
 		
 		if(phoneList != null && emailList != null) {
 		try (Statement stmt = conn.createStatement()) {
-
+			logger.info("Inside 2nd try: "+contact_id);
 			for (int i = 0; i < phoneList.size(); i++) {
 				String sql = String.format("INSERT INTO phone (contact_id, number) values ('%s','%s')", contact_id,
 						phoneList.get(i).getNumber());
@@ -156,6 +166,7 @@ public class AddressBookDBService {
 			}
 		} catch (SQLException e) {
 			conn.rollback();
+			e.printStackTrace();
 			throw new CustomMySqlException(e.getMessage(), ExceptionType.OTHER_TYPE);
 		}
 
@@ -171,13 +182,12 @@ public class AddressBookDBService {
 			}
 			contactData = new ContactData(contact_id, firstName, lastName, address, city, state, zip, emailList,
 					phoneList);
-			return contactData;
+			
 		} catch (SQLException e) {
 			conn.rollback();
 			e.printStackTrace();
 		}
 		}
-//		finally {
 			if (conn != null) {
 				try {
 					conn.commit();
@@ -187,26 +197,59 @@ public class AddressBookDBService {
 					e.printStackTrace();
 				}
 			}
-//		}
-
-		return null;
-
+		return contactData;
 	}
 
 	public int updateContactDataUsingPreparedStatement(String firstName, String lastName) {
 		int result = 0;
 		try (Connection conn = this.getConnection()) {
-			String sql = "update contact_table set lastname =? where firstname = ?";
+			
+			String sql = "update contact_table set lastname =? where firstname = ? ";
 			PreparedStatement stmt = conn.prepareStatement(sql);
 			stmt.setString(1, lastName);
 			stmt.setString(2, firstName);
 			result = stmt.executeUpdate();
-			stmt.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		return result;
 	}
+	
+	
+	public boolean updateContactDataPhoneNumber(ContactData contactObj, int id) throws SQLException {
+
+		int contact_id = -1;
+		ContactData contactData = null;
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			conn.setAutoCommit(false);
+		} catch (SQLException e) {
+			throw new CustomMySqlException(e.getMessage(), ExceptionType.OTHER_TYPE);
+		}
+		
+		try{
+			DOMConfigurator.configure("log4j.xml");
+			String sql = "Delete from phone where contact_id = ?";
+			PreparedStatement pStatement = conn.prepareStatement(sql);
+			pStatement.setInt(1, id);
+			pStatement.executeUpdate();
+			for(Phone phone : contactObj.getPhoneList()) {
+				sql = "insert into phone(contact_id, number) values (?, ?)";
+				pStatement = conn.prepareStatement(sql);
+				pStatement.setInt(1, id);
+				pStatement.setString(2, phone.getNumber());
+				pStatement.executeUpdate();
+			}
+			conn.commit();
+		} catch (SQLException e) {
+			conn.rollback();
+			logger.info("Errors!!!!!!!!!!!!!!!!!");
+			throw new CustomMySqlException(e.getMessage(), ExceptionType.OTHER_TYPE);
+		}
+		return true;
+	}
+	
 
 	public List<ContactData> getRecordsByDate(LocalDate date1, LocalDate date2) {
 		List<ContactData> listContact = null;
@@ -217,7 +260,6 @@ public class AddressBookDBService {
 			stmt.setDate(2, java.sql.Date.valueOf(date2));
 			ResultSet resultSet = stmt.executeQuery();
 			listContact = getContactData(resultSet);
-			stmt.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -234,11 +276,12 @@ public class AddressBookDBService {
 			while (resultSet.next()) {
 				numberRow = resultSet.getInt("count(*)");
 			}
-			stmt.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		return numberRow;
 	}
+
+	
 
 }

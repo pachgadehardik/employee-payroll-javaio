@@ -12,6 +12,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
 
 import com.capg.javaio.exceptions.CustomMySqlException;
+import com.capg.javaio.exceptions.CustomMySqlException.ExceptionType;
 import com.capg.javaio.model.ContactData;
 import com.capg.javaio.model.Email;
 import com.capg.javaio.model.EmployeePayrollData;
@@ -53,6 +54,7 @@ public class AddressBookService {
 			String zip) throws SQLException {
 		contactDataList.add(
 				addressBookDBService.addContactToTables(firstName, lastName, address, city, state, zip, null, null));
+		logger.info("ContactDataList is :"+contactDataList);
 	}
 
 	public boolean checkContactInSyncWithDB(String name) throws CustomMySqlException {
@@ -66,16 +68,31 @@ public class AddressBookService {
 		return temp;
 	}
 
-	public void updateContactData(String firstName, String lastName, IOService ioService) {
-		if (ioService.equals(IOService.DB_IO)) {
-			int result = addressBookDBService.getInstance().updateContactDataUsingPreparedStatement(firstName,
-					lastName);
-			if (result == 0)
-				return;
-		}
+	public void updateContactData(String firstName, String lastName, IOService ioService) throws CustomMySqlException {
 		ContactData contactData = this.getContactData(firstName);
-		if (contactData != null)
+		if(contactData == null) throw new CustomMySqlException("Contact Doesnt Exist", ExceptionType.NO_DATA_FOUND);
+		else {
+			if (ioService.equals(IOService.DB_IO)) {
+				int result = addressBookDBService.getInstance().updateContactDataUsingPreparedStatement(firstName,
+						lastName);
+				if (result == 0)
+					return;
+			}
 			contactData.setLastName(lastName);
+		}
+	}
+	
+	public void updateContactObject(ContactData contactObj, IOService ioService) throws SQLException {
+		ContactData contactData = this.getContactData(contactObj.getFirstName());
+		if(contactData == null) throw new CustomMySqlException("Contact Doesnt Exist", ExceptionType.NO_DATA_FOUND);
+		else {
+			if (ioService.equals(IOService.DB_IO)) {
+				boolean result = addressBookDBService.getInstance().updateContactDataPhoneNumber(contactObj,contactData.getId());
+				if (result) {
+					contactData = contactObj;
+				}
+			}
+		}
 	}
 
 	public int getRecordsByDates(LocalDate date1, LocalDate date2) {
@@ -123,9 +140,9 @@ public class AddressBookService {
 		return contactDataList.size();
 	}
 
-	public int countEntries() {
-		return contactDataList.size();
-	}
+//	public int countEntries() {
+//		return contactDataList.size();
+//	}
 
 	public void addContactToDB(ContactData contactData, IOService ioService) throws SQLException {
 		if (ioService.equals(IOService.DB_IO))
